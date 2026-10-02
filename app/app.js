@@ -190,6 +190,57 @@
     keyHandler = null;
   }
   $('#backdrop').addEventListener('click', () => closeSheet());
+
+  // Ô ngày: hiển thị dd/mm/yyyy, chạm vào mở bộ chọn ngày gốc của iOS (input date trong suốt phủ lên)
+  const ddmmyyyy = (s) => (s ? s.split('-').reverse().join('/') : 'dd/mm/yyyy');
+  const dateField = (id, v) => `<label class="input datefld"><span>${ddmmyyyy(v)}</span><input type="date" id="${id}" value="${v || ''}" aria-label="Chọn ngày"></label>`;
+  document.addEventListener('input', (e) => { if (e.target.matches('.datefld input')) e.target.previousElementSibling.textContent = ddmmyyyy(e.target.value); });
+
+  // Vuốt xuống để đóng sheet như iOS (khi nội dung sheet đang ở đầu trang)
+  function swipeToClose(el, level) {
+    let y0 = null, x0 = 0, dy = 0, t0 = 0, drag = false;
+    const scrolled = (t) => { for (let n = t; n && n !== el.parentNode; n = n.parentNode) if (n.scrollTop > 0) return true; return false; };
+    el.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1 || scrolled(e.target) || e.target.closest('input,textarea,select')) { y0 = null; return; }
+      y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; t0 = Date.now(); drag = false;
+    }, { passive: true });
+    el.addEventListener('touchmove', (e) => {
+      if (y0 == null) return;
+      const d = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
+      if (!drag) {
+        if (Math.abs(dx) > Math.abs(d) || d < 0) { y0 = null; return; }
+        if (d < 8) return;
+        drag = true; el.style.transition = 'none'; document.activeElement && document.activeElement.blur && document.activeElement.blur();
+      }
+      dy = Math.max(0, d - 8);
+      el.style.transform = `translateY(${dy}px)`;
+      $('#backdrop').style.opacity = String(Math.max(0, 1 - dy / 400));
+      e.preventDefault();
+    }, { passive: false });
+    const end = () => {
+      if (!drag) { y0 = null; return; }
+      const v = dy / Math.max(1, Date.now() - t0);
+      el.style.transition = ''; el.style.transform = ''; $('#backdrop').style.opacity = '';
+      if (dy > 120 || (v > 0.5 && dy > 40)) closeSheet(level);
+      drag = false; y0 = null;
+    };
+    el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
+  }
+  swipeToClose($('#sheet'), 1); swipeToClose($('#sheet2'), 2);
+
+  // iOS (mở từ Màn hình chính) có lúc báo chiều cao thiếu đúng phần thanh trạng thái → bù vào để app phủ hết màn hình
+  function fixViewport() {
+    const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+    let gap = 0;
+    if (standalone && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement && document.activeElement.tagName)) {
+      const portrait = innerHeight > innerWidth;
+      const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      gap = sh - innerHeight;
+      if (gap < 0 || gap > 140) gap = 0;
+    }
+    document.documentElement.style.setProperty('--fixgap', gap + 'px');
+  }
+  fixViewport(); addEventListener('resize', fixViewport); addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
   let toastT;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
   function confirmBox(msg, okLabel, onOk) {
@@ -231,7 +282,7 @@
   function renderHome() {
     const el = $('#s-home'), t = trip(), d = new Date();
     const greet = d.getHours() < 11 ? 'Chào buổi sáng' : d.getHours() < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
-    let h = `<div class="top"><div><small>${WD[d.getDay()]}, ${d.getDate()} Th${d.getMonth() + 1}</small><h1>${greet} 👋</h1></div><button class="iconbtn" id="btnSettings" aria-label="Cài đặt">⚙️</button></div>`;
+    let h = `<div class="top"><div><small>${WD[d.getDay()]}, ${d.getDate()} Th${d.getMonth() + 1}</small><h1>${greet} 👋</h1></div><button class="setbtn" id="btnSettings" aria-label="Cài đặt"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="url(#setgrad)"/><circle cx="50" cy="50" r="33" fill="none" stroke="#3A3A3C" stroke-width="11" stroke-dasharray="7 5.96"/><circle cx="50" cy="50" r="27" fill="#3A3A3C"/><circle cx="50" cy="50" r="18" fill="url(#setgrad)"/><circle cx="50" cy="50" r="8" fill="#3A3A3C"/></svg></button></div>`;
     if (!t) {
       h += `<div class="glass empty"><div class="big">🧳</div><b>Chưa có chuyến đi nào</b>Tạo chuyến đầu tiên để lên lịch trình, đặt ngân sách và ghi chi tiêu.<button class="primary" id="btnNew">＋ Tạo chuyến đi</button><button class="secondary" id="btnSample">Xem thử với chuyến mẫu</button></div>`;
       el.innerHTML = h;
@@ -282,7 +333,7 @@
       <label class="field"><span>Tên chuyến</span><input class="input" id="fName" maxlength="60" placeholder="VD: Đà Nẵng – Hội An" value="${esc(f.name)}"></label>
       <div class="field"><span>Loại</span><div class="seg" id="fType"><button data-v="travel" class="${f.type === 'travel' ? 'on' : ''}">🏖️ Du lịch</button><button data-v="work" class="${f.type === 'work' ? 'on' : ''}">💼 Công tác</button></div></div>
       <div class="field"><span>Biểu tượng</span><div class="chips" id="fEmoji">${EMOJIS.map((e) => `<button class="chip ${f.emoji === e ? 'sel' : ''}" data-v="${e}">${e}</button>`).join('')}</div></div>
-      <div class="row2"><label class="field"><span>Ngày đi</span><input class="input" type="date" id="fStart" value="${f.start}"></label><label class="field"><span>Ngày về</span><input class="input" type="date" id="fEnd" value="${f.end}"></label></div>
+      <div class="row2"><div class="field"><span>Ngày đi</span>${dateField('fStart', f.start)}</div><div class="field"><span>Ngày về</span>${dateField('fEnd', f.end)}</div></div>
       <div class="field"><span>Điểm đến (đánh dấu lên bản đồ)</span><div class="provpick" id="fProv">${window.PROVINCES.map((p) => `<button class="chip ${f.provinces.includes(p.id) ? 'sel' : ''}" data-v="${p.id}">${esc(p.name)}</button>`).join('')}</div></div>
       <div class="row2"><label class="field"><span>Ngân sách</span><input class="input" inputmode="decimal" id="fBudget" placeholder="0" value="${f.budget ? f.budget.toLocaleString('vi-VN') : ''}"></label>
         <div class="field"><span>Tiền tệ chuyến</span><button class="input" id="fCur" style="text-align:left">${CUR[f.currency]?.f || ''} ${f.currency}</button></div></div>
@@ -475,7 +526,7 @@
     openSheet(`<div class="shead"><button data-x>Huỷ</button><span>${isNew ? 'Khoản chi mới' : 'Sửa khoản chi'}</span><button data-ok>Lưu</button></div>
       <div class="amount"><span class="v" id="kpv">0</span><button class="curbtn" id="kCur">VND</button><small id="kConv"></small></div>
       <div class="chips" id="kCat">${CATS.map((c) => `<button class="chip ${f.cat === c.k ? 'sel' : ''}" data-v="${c.k}">${c.i} ${c.n}</button>`).join('')}</div>
-      <div class="row2"><input class="input" id="kTitle" maxlength="80" placeholder="Ghi chú (VD: Ăn tối hải sản)" value="${esc(f.title)}"><input class="input" type="date" id="kDate" value="${f.date}"></div>
+      <div class="row2"><input class="input" id="kTitle" maxlength="80" placeholder="Ghi chú (VD: Ăn tối hải sản)" value="${esc(f.title)}">${dateField('kDate', f.date)}</div>
       <div class="opts" style="margin-top:10px"><button class="opt ${f.reimb ? 'on' : ''}" id="kReimb">💼 Hoàn ứng</button><button class="opt ${linked().length ? 'on' : ''}" id="kRc">📷 Hoá đơn${linked().length ? ' (' + linked().length + ')' : ''}</button></div>
       <div class="keypad">${['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => `<button data-key="${k}">${k}</button>`).join('')}<button data-key="000" id="kDot">000</button><button data-key="0">0</button><button data-key="del" aria-label="Xoá">⌫</button></div>
       ${isNew ? '' : '<button class="secondary danger" id="kDel">Xoá khoản chi</button>'}
@@ -621,13 +672,13 @@
   async function settingsSheet() {
     let persisted = null; try { persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch {}
     let usage = ''; try { const e = await navigator.storage.estimate(); usage = (e.usage / 1048576).toFixed(1) + ' MB'; } catch {}
-    openSheet(`<div class="shead"><span></span><span>Cài đặt</span><button data-x>Xong</button></div>
+    openSheet(`<div class="shead"><span></span><span></span><button data-x>Xong</button></div>
       <div class="field"><span>Tiền tệ mặc định khi ghi chi tiêu</span><button class="input" id="stCur" style="text-align:left">${CUR[S.settings.currency].f} ${S.settings.currency} · ${CUR[S.settings.currency].n}</button></div>
       <div class="glass banner" style="border-radius:18px"><span>💱</span><span><b>Tỷ giá</b><br>${rateTime() ? 'Cập nhật lần cuối ' + rateTime() : 'Chưa tải được'} · nguồn cập nhật mỗi ngày một lần.<br><button class="grad-text" style="font-weight:700" id="stRates">Cập nhật ngay</button></span></div>
       <div class="glass banner" style="border-radius:18px"><span>💾</span><span><b>Dữ liệu lưu trên máy này</b><br>Chuyến đi và ảnh hoá đơn chỉ nằm trong trình duyệt của điện thoại${usage ? ` (đang dùng ${usage})` : ''}. ${persisted ? 'Trình duyệt đã cho phép lưu lâu dài.' : 'Hãy thêm app vào Màn hình chính để trình duyệt không tự xoá dữ liệu.'} Xoá dữ liệu Safari/Chrome sẽ mất toàn bộ.</span></div>
       <button class="secondary" id="stSample">Thêm chuyến mẫu để xem thử</button>
       <button class="secondary danger" id="stWipe">Xoá toàn bộ dữ liệu</button>
-      <p class="note">Bản đồ: 34 tỉnh, thành theo NQ 202/2025/QH15; Quảng Ninh, Bắc Ninh là thành phố trực thuộc TW từ tháng 9/2026.<br>Kế Hoạch Hoá · phiên bản 1.1</p>`, 1, (el) => {
+      <p class="note">Bản đồ: 34 tỉnh, thành theo NQ 202/2025/QH15; Quảng Ninh, Bắc Ninh là thành phố trực thuộc TW từ tháng 9/2026.<br>Kế Hoạch Hoá · phiên bản 1.2</p>`, 1, (el) => {
       $$('[data-x]', el).forEach((b) => b.onclick = () => closeSheet());
       $('#stCur', el).onclick = () => currencyPicker(S.settings.currency, (c) => { S.settings.currency = c; save(); $('#stCur', el).textContent = `${CUR[c].f} ${c} · ${CUR[c].n}`; });
       $('#stRates', el).onclick = () => refreshRates(true);
