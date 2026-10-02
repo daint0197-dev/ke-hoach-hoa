@@ -1,4 +1,4 @@
-# Sổ Chuyến Đi
+# Kế Hoạch Hoá
 
 Web app tĩnh (HTML/CSS/JS, không cần build) để lập lịch trình, quản lý ngân sách chuyến đi, lưu ảnh hoá đơn công tác phí và đánh dấu 34 tỉnh/thành đã đến.
 

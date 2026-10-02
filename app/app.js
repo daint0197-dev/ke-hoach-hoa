@@ -1,4 +1,4 @@
-/* Sổ Chuyến Đi — logic ứng dụng (không cần thư viện ngoài) */
+/* Kế Hoạch Hoá — logic ứng dụng (không cần thư viện ngoài) */
 (function () {
   'use strict';
 
@@ -627,7 +627,7 @@
       <div class="glass banner" style="border-radius:18px"><span>💾</span><span><b>Dữ liệu lưu trên máy này</b><br>Chuyến đi và ảnh hoá đơn chỉ nằm trong trình duyệt của điện thoại${usage ? ` (đang dùng ${usage})` : ''}. ${persisted ? 'Trình duyệt đã cho phép lưu lâu dài.' : 'Hãy thêm app vào Màn hình chính để trình duyệt không tự xoá dữ liệu.'} Xoá dữ liệu Safari/Chrome sẽ mất toàn bộ.</span></div>
       <button class="secondary" id="stSample">Thêm chuyến mẫu để xem thử</button>
       <button class="secondary danger" id="stWipe">Xoá toàn bộ dữ liệu</button>
-      <p class="note">Bản đồ: 34 tỉnh, thành theo NQ 202/2025/QH15; Quảng Ninh, Bắc Ninh là thành phố trực thuộc TW từ tháng 9/2026.<br>Sổ Chuyến Đi · phiên bản 1.0</p>`, 1, (el) => {
+      <p class="note">Bản đồ: 34 tỉnh, thành theo NQ 202/2025/QH15; Quảng Ninh, Bắc Ninh là thành phố trực thuộc TW từ tháng 9/2026.<br>Kế Hoạch Hoá · phiên bản 1.1</p>`, 1, (el) => {
       $$('[data-x]', el).forEach((b) => b.onclick = () => closeSheet());
       $('#stCur', el).onclick = () => currencyPicker(S.settings.currency, (c) => { S.settings.currency = c; save(); $('#stCur', el).textContent = `${CUR[c].f} ${c} · ${CUR[c].n}`; });
       $('#stRates', el).onclick = () => refreshRates(true);

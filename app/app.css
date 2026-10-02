@@ -1,4 +1,4 @@
-/* Sổ Chuyến Đi — phong cách Glass (mẫu B), gradient xanh dương */
+/* Kế Hoạch Hoá — phong cách Glass (mẫu B), gradient xanh dương */
 :root{
   --g1:#0A6CFF; --g2:#22C3F6;               /* gradient chính */
   --grad:linear-gradient(135deg,var(--g1),var(--g2));
@@ -28,19 +28,21 @@
   --shadow:0 8px 30px rgba(0,0,0,.4); color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg1)}
+/* Khoá trang: cả document không cuộn/nảy, chỉ .scroll cuộn → tránh iOS kéo giãn cả màn hình */
+html,body{margin:0;height:100%;background:var(--bg1);overflow:hidden;overscroll-behavior:none}
 body{font-family:"Noto Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;color:var(--text);display:flex;justify-content:center;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:none;border:0;padding:0;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [hidden]{display:none!important}
-.app{position:relative;width:100%;max-width:440px;height:100%;overflow:hidden;
+/* position:fixed + inset:0 phủ đúng toàn màn hình (iOS standalone tính height:100% thiếu phần thanh trạng thái) */
+.app{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;width:100%;max-width:440px;overflow:hidden;
   background:radial-gradient(110% 55% at 0% 0%,var(--bg2),transparent 60%),radial-gradient(100% 60% at 100% 45%,var(--bg3),transparent 60%),var(--bg1)}
 .app::before,.app::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
 .app::before{width:280px;height:280px;background:var(--g1);filter:blur(100px);opacity:.28;top:-80px;right:-90px}
 .app::after{width:240px;height:240px;background:var(--g2);filter:blur(110px);opacity:.22;bottom:140px;left:-100px}
-@media (min-width:520px){ body{align-items:center;background:#0b1220} .app{height:min(940px,96vh);border-radius:44px;box-shadow:0 0 0 10px #1a2233,0 30px 80px rgba(0,0,0,.5)} }
-.scroll{position:absolute;inset:0;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 18px calc(env(safe-area-inset-bottom,0px) + 120px);z-index:1;-webkit-overflow-scrolling:touch}
+@media (min-width:520px){ body{align-items:center;background:#0b1220} .app{position:relative;top:auto;bottom:auto;left:auto;right:auto;height:min(940px,96vh);border-radius:44px;box-shadow:0 0 0 10px #1a2233,0 30px 80px rgba(0,0,0,.5)} }
+.scroll{position:absolute;inset:0;overflow-y:auto;overscroll-behavior-y:contain;padding:calc(env(safe-area-inset-top,0px) + 16px) 18px calc(env(safe-area-inset-bottom,0px) + 120px);z-index:1;-webkit-overflow-scrolling:touch}
 .screen{display:none} .screen.active{display:block;animation:fade .28s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -228,10 +230,10 @@ textarea.input{height:84px;padding:12px 14px;resize:none}
 .banner b{color:var(--text)}
 .triprow .pct{font-size:12px;color:var(--sub);font-weight:600}
 #sheet2{z-index:22}
-/* Dải thanh trạng thái (iPhone khi mở từ Màn hình chính): chữ giờ/pin của iOS luôn màu trắng
-   (black-translucent) nên nền phải đủ đậm; nội dung cuộn qua sẽ nằm dưới dải này thay vì đè lên Dynamic Island */
+/* Dải kính mờ dưới thanh trạng thái (khi mở từ Màn hình chính): nội dung cuộn qua sẽ mờ đi
+   thay vì đè lên giờ/Dynamic Island; màu khớp với nền app ở cả chế độ sáng và tối */
 .statusbar{position:absolute;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);z-index:8;pointer-events:none;background:var(--sbBg);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%)}
-:root{--sbBg:linear-gradient(90deg,#0A6CFF,#22C3F6)}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --sbBg:rgba(7,16,31,.78) } }
-:root[data-theme="dark"]{ --sbBg:rgba(7,16,31,.78) }
+:root{--sbBg:rgba(232,241,255,.72)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --sbBg:rgba(7,16,31,.72) } }
+:root[data-theme="dark"]{ --sbBg:rgba(7,16,31,.72) }
 @media (min-width:520px){ .statusbar{display:none} }

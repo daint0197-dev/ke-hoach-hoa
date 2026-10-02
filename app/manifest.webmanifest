@@ -1,6 +1,6 @@
 {
-  "name": "Sổ Chuyến Đi",
-  "short_name": "Chuyến Đi",
+  "name": "Kế Hoạch Hoá",
+  "short_name": "Kế Hoạch Hoá",
   "description": "Lập lịch trình, quản lý ngân sách chuyến đi và đánh dấu tỉnh thành đã đến",
   "lang": "vi",
   "start_url": "./",
