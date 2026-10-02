@@ -1,7 +1,7 @@
 /* Kế Hoạch Hoá — logic ứng dụng (không cần thư viện ngoài) */
 (function () {
   'use strict';
-  const APP_VERSION = '1.4'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
+  const APP_VERSION = '1.5'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
 
   // ---------- tiện ích ----------
   const $ = (s, r = document) => r.querySelector(s);
@@ -202,7 +202,7 @@
     let y0 = null, x0 = 0, dy = 0, t0 = 0, drag = false;
     const scrolled = (t) => { for (let n = t; n && n !== el.parentNode; n = n.parentNode) if (n.scrollTop > 0) return true; return false; };
     el.addEventListener('touchstart', (e) => {
-      if (e.touches.length > 1 || scrolled(e.target) || e.target.closest('input,textarea,select')) { y0 = null; return; }
+      if (e.touches.length > 1 || !e.target.closest('.grab,.shead') || e.target.closest('button,input,textarea,select,a')) { y0 = null; return; }
       y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dy = 0; t0 = Date.now(); drag = false;
     }, { passive: true });
     el.addEventListener('touchmove', (e) => {
@@ -211,7 +211,7 @@
       if (!drag) {
         if (Math.abs(dx) > Math.abs(d) || d < 0) { y0 = null; return; }
         if (d < 8) return;
-        drag = true; el.style.transition = 'none'; document.activeElement && document.activeElement.blur && document.activeElement.blur();
+        drag = true; el.style.transition = 'none';
       }
       dy = Math.max(0, d - 8);
       el.style.transform = `translateY(${dy}px)`;
@@ -240,22 +240,9 @@
       if (gap < 0 || gap > 140) gap = 0;
     }
     if (gap !== fixGap) { fixGap = gap; document.documentElement.style.setProperty('--fixgap', gap + 'px'); }
-    keyboardFix();
   }
   let fixGap = -1;
-  // Bàn phím iOS phủ lên trang chứ không thu nhỏ trang → nâng sheet lên trên bàn phím và cuộn ô đang nhập vào giữa
-  function keyboardFix() {
-    const vv = window.visualViewport; if (!vv) return;
-    const kb = Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop));
-    const lift = kb > 80 ? kb + Math.max(0, fixGap) : 0;
-    document.documentElement.style.setProperty('--kb', lift + 'px');
-    document.documentElement.classList.toggle('kb-open', lift > 0);
-    const a = document.activeElement;
-    if (lift && a && a.closest && a.closest('.sheet')) setTimeout(() => a.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
-  }
   fixViewport(); addEventListener('resize', fixViewport); addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
-  if (window.visualViewport) { visualViewport.addEventListener('resize', keyboardFix); visualViewport.addEventListener('scroll', keyboardFix); }
-  document.addEventListener('focusin', (e) => { if (e.target.closest && e.target.closest('.sheet') && document.documentElement.classList.contains('kb-open')) setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60); });
   let toastT;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
   function confirmBox(msg, okLabel, onOk) {
@@ -394,7 +381,7 @@
       $$('[data-x]', el).forEach((b) => b.onclick = () => { closeSheet(); renderHome(); });
       $$('[data-t]', el).forEach((b) => b.onclick = () => { const c = t.checklist.find((x) => x.id === b.dataset.t); c.done = !c.done; save(); redraw(); });
       $$('[data-d]', el).forEach((b) => b.onclick = () => { t.checklist = t.checklist.filter((x) => x.id !== b.dataset.d); save(); redraw(); });
-      const add = () => { const v = $('#ckNew', el).value.trim(); if (!v) { $('#ckNew', el).focus(); return; } t.checklist.unshift({ id: uid(), t: v, done: false }); save(); redraw(); $('#ckNew').focus(); toast('Đã thêm "' + v + '"'); };
+      const add = () => { const v = $('#ckNew', el).value.trim(); if (!v) { toast('Ô nhập đang trống'); $('#ckNew', el).focus(); return; } t.checklist.unshift({ id: uid(), t: v, done: false }); save(); redraw(); $('#ckNew').focus(); toast('Đã thêm "' + v + '"'); };
       // giữ bàn phím mở khi bấm "Thêm" (không để nút lấy mất focus của ô nhập)
       $('#ckAdd', el).addEventListener('pointerdown', (e) => e.preventDefault());
       $('#ckAdd', el).onclick = add; $('#ckNew', el).onkeydown = (e) => e.key === 'Enter' && add();
