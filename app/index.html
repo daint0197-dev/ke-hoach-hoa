@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chuyến Đi">
+<meta name="theme-color" content="#0A6CFF">
+<title>Sổ Chuyến Đi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&subset=vietnamese&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app" id="app">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A6CFF"/><stop offset="1" stop-color="#22C3F6"/></linearGradient>
+    <linearGradient id="mapgrad" x1="0" y1="0" x2="0" y2="940" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0A6CFF"/><stop offset="1" stop-color="#22C3F6"/></linearGradient>
+  </defs></svg>
+
+  <div class="statusbar" aria-hidden="true"></div>
+  <div class="scroll" id="scroll">
+    <section class="screen active" data-screen="home" id="s-home"></section>
+    <section class="screen" data-screen="plan" id="s-plan"></section>
+    <section class="screen" data-screen="budget" id="s-budget"></section>
+    <section class="screen" data-screen="map" id="s-map"></section>
+  </div>
+
+  <button class="fab" id="fab" aria-label="Thêm chi tiêu" hidden>＋</button>
+
+  <nav class="tabbar glass" aria-label="Điều hướng">
+    <button data-tab="home" class="active" aria-label="Chuyến đi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 2 12h3v8h6v-6h2v6h6v-8h3z"/></svg><span>Chuyến đi</span></button>
+    <button data-tab="plan" aria-label="Lịch trình"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm-2 7h14v11H5z"/></svg><span>Lịch trình</span></button>
+    <button data-tab="budget" aria-label="Ngân sách"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v1H3zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3zm13 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg><span>Ngân sách</span></button>
+    <button data-tab="map" aria-label="Bản đồ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><span>Bản đồ</span></button>
+  </nav>
+
+  <div class="backdrop" id="backdrop"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+  <div class="sheet" id="sheet2" role="dialog" aria-modal="true"></div>
+  <div class="viewer" id="viewer" hidden></div>
+  <div class="toast" id="toast" role="status"></div>
+  <input type="file" id="filepick" accept="image/*" capture="environment" hidden>
+</div>
+<script src="provinces.js"></script>
+<script src="map-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
