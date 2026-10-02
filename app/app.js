@@ -1,6 +1,7 @@
 /* Kế Hoạch Hoá — logic ứng dụng (không cần thư viện ngoài) */
 (function () {
   'use strict';
+  const APP_VERSION = '1.3'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
 
   // ---------- tiện ích ----------
   const $ = (s, r = document) => r.querySelector(s);
@@ -678,7 +679,7 @@
       <div class="glass banner" style="border-radius:18px"><span>💾</span><span><b>Dữ liệu lưu trên máy này</b><br>Chuyến đi và ảnh hoá đơn chỉ nằm trong trình duyệt của điện thoại${usage ? ` (đang dùng ${usage})` : ''}. ${persisted ? 'Trình duyệt đã cho phép lưu lâu dài.' : 'Hãy thêm app vào Màn hình chính để trình duyệt không tự xoá dữ liệu.'} Xoá dữ liệu Safari/Chrome sẽ mất toàn bộ.</span></div>
       <button class="secondary" id="stSample">Thêm chuyến mẫu để xem thử</button>
       <button class="secondary danger" id="stWipe">Xoá toàn bộ dữ liệu</button>
-      <p class="note">Bản đồ: 34 tỉnh, thành theo NQ 202/2025/QH15; Quảng Ninh, Bắc Ninh là thành phố trực thuộc TW từ tháng 9/2026.<br>Kế Hoạch Hoá · phiên bản 1.2</p>`, 1, (el) => {
+      <p class="note">Bản đồ: 34 tỉnh, thành theo NQ 202/2025/QH15; Quảng Ninh, Bắc Ninh là thành phố trực thuộc TW từ tháng 9/2026.<br>Kế Hoạch Hoá · phiên bản ${APP_VERSION}</p>`, 1, (el) => {
       $$('[data-x]', el).forEach((b) => b.onclick = () => closeSheet());
       $('#stCur', el).onclick = () => currencyPicker(S.settings.currency, (c) => { S.settings.currency = c; save(); $('#stCur', el).textContent = `${CUR[c].f} ${c} · ${CUR[c].n}`; });
       $('#stRates', el).onclick = () => refreshRates(true);
@@ -724,11 +725,26 @@
   // ---------- khởi động ----------
   $$('[data-tab]').forEach((b) => b.onclick = () => go(b.dataset.tab));
   $('#fab').onclick = () => expenseForm(null);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshRates(false); rerender(); } });
+  // Tự kiểm tra bản mới: version.json luôn được tải mới (không dùng bộ nhớ đệm); có bản mới thì tải lại bằng địa chỉ mới để bỏ qua cache
+  async function checkUpdate() {
+    try {
+      const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      const { version } = await r.json();
+      if (version && version !== APP_VERSION) {
+        const k = 'soChuyenDi.updTried';
+        if (sessionStorage.getItem(k) === version) return; // tránh tải lại liên tục nếu máy chủ chưa kịp cập nhật
+        sessionStorage.setItem(k, version);
+        location.replace(location.pathname + '?v=' + encodeURIComponent(version) + Date.now().toString(36));
+      }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshRates(false); rerender(); checkUpdate(); } });
   (async () => {
     await loadReceipts();
     pickDefaultTrip();
     go(S.ui.tab || 'home');
     refreshRates(false);
+    checkUpdate();
   })();
 })();
