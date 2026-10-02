@@ -1,7 +1,7 @@
 /* Kế Hoạch Hoá — logic ứng dụng (không cần thư viện ngoài) */
 (function () {
   'use strict';
-  const APP_VERSION = '1.5'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
+  const APP_VERSION = '1.6'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
 
   // ---------- tiện ích ----------
   const $ = (s, r = document) => r.querySelector(s);
@@ -384,7 +384,7 @@
       const add = () => { const v = $('#ckNew', el).value.trim(); if (!v) { toast('Ô nhập đang trống'); $('#ckNew', el).focus(); return; } t.checklist.unshift({ id: uid(), t: v, done: false }); save(); redraw(); $('#ckNew').focus(); toast('Đã thêm "' + v + '"'); };
       // giữ bàn phím mở khi bấm "Thêm" (không để nút lấy mất focus của ô nhập)
       $('#ckAdd', el).addEventListener('pointerdown', (e) => e.preventDefault());
-      $('#ckAdd', el).onclick = add; $('#ckNew', el).onkeydown = (e) => e.key === 'Enter' && add();
+      $('#ckAdd', el).onclick = add; $('#ckNew', el).addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); add(); } });
     };
     const redraw = () => { const el = $('#sheet'); el.innerHTML = '<div class="grab"></div>' + draw(); wire(el); };
     openSheet(draw(), 1, wire);
@@ -664,7 +664,7 @@
       const sw = $('#pvT', el); sw.onclick = () => { if (sw.disabled) return; const v = ensure(); v.manual = !v.manual; save(); redraw(); renderMap(); };
       $$('[data-rm]', el).forEach((b) => b.onclick = () => { ensure().places.splice(+b.dataset.rm, 1); save(); redraw(); });
       const add = () => { const x = $('#pvNew', el).value.trim(); if (!x) return; const v = ensure(); v.places.push(x); if (!visitedMap()[id]) v.manual = true; save(); redraw(); renderMap(); $('#pvNew').focus(); };
-      $('#pvAdd', el).onclick = add; $('#pvNew', el).onkeydown = (e) => e.key === 'Enter' && add();
+      $('#pvAdd', el).onclick = add; $('#pvNew', el).addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); add(); } });
       $('#pvNote', el).oninput = (e) => { ensure().note = e.target.value; save(); };
     };
     const redraw = () => { const el = $('#sheet'); const st = el.scrollTop; el.innerHTML = '<div class="grab"></div>' + draw(); wire(el); el.scrollTop = st; };
