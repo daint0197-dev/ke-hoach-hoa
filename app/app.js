@@ -1,7 +1,7 @@
 /* Kế Hoạch Hoá — logic ứng dụng (không cần thư viện ngoài) */
 (function () {
   'use strict';
-  const APP_VERSION = '1.6'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
+  const APP_VERSION = '1.7'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
 
   // ---------- tiện ích ----------
   const $ = (s, r = document) => r.querySelector(s);
@@ -229,7 +229,8 @@
   }
   swipeToClose($('#sheet'), 1); swipeToClose($('#sheet2'), 2);
 
-  // iOS (mở từ Màn hình chính) có lúc báo chiều cao thiếu đúng phần thanh trạng thái → bù vào để app phủ hết màn hình
+  // iOS (mở từ Màn hình chính) trên một số máy không cho trang vẽ vào dải dưới cùng (vùng thanh vuốt):
+  // khi đó chiều cao trang ngắn hơn màn hình, nên bỏ khoảng chừa cho thanh vuốt để thanh tab nằm sát đáy vùng hiển thị
   function fixViewport() {
     const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
     let gap = 0;
@@ -239,7 +240,7 @@
       gap = sh - innerHeight;
       if (gap < 0 || gap > 140) gap = 0;
     }
-    if (gap !== fixGap) { fixGap = gap; document.documentElement.style.setProperty('--fixgap', gap + 'px'); }
+    if (gap !== fixGap) { fixGap = gap; document.documentElement.classList.toggle('vp-short', gap > 20); }
   }
   let fixGap = -1;
   fixViewport(); addEventListener('resize', fixViewport); addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
@@ -628,7 +629,7 @@
     ];
     const isl = (k, label) => { const I = M.islands[k], on = !!vis[I.prov]; const xs = I.pts.map((p) => p[0]), ys = I.pts.map((p) => p[1]); const x0 = Math.min(...xs) - 10, y0 = Math.min(...ys) - 10, w = Math.max(...xs) - x0 + 10, h = Math.max(...ys) - y0 + 10;
       return `<g class="isl ${on ? 'on' : ''}" data-p="${I.prov}" style="cursor:pointer"><rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="10"/>${I.pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6"/>`).join('')}<text x="${x0 + w / 2}" y="${y0 + h + 15}" text-anchor="middle">${label}</text></g>`; };
-    el.innerHTML = `<div class="top"><div><small>Hành trình của bạn</small><h1>Dấu chân 🇻🇳</h1></div></div>
+    el.innerHTML = `<div class="top"><div><small>Hành trình của bạn</small><h1>Dấu chân Việt Nam <svg class="flag" viewBox="0 0 30 20" role="img" aria-label="Cờ Việt Nam"><rect width="30" height="20" rx="2.5" fill="#DA251D"/><polygon fill="#FFCD00" points="15.00,4.30 16.39,8.58 20.90,8.58 17.25,11.23 18.64,15.52 15.00,12.87 11.36,15.52 12.75,11.23 9.10,8.58 13.61,8.58"/></svg></h1></div></div>
       <div class="glass mstat"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="30" fill="none" stroke="var(--track)" stroke-width="9"/><circle cx="38" cy="38" r="30" fill="none" stroke="url(#grad)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(n / 34 * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">${Math.round(n / 34 * 100)}%</text></svg>
         <div><b>${n} / 34</b><small>tỉnh, thành phố đã đến</small><small>${reg.map((x) => `${x.r} ${x.v}/${x.all}`).join(' · ')}</small></div></div>
       <div class="glass mapwrap"><svg class="vnmap" viewBox="0 0 ${M.w} ${M.h}" role="img" aria-label="Bản đồ 34 tỉnh thành Việt Nam">
