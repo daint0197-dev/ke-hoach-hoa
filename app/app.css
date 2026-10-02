@@ -248,3 +248,8 @@ textarea.input{height:84px;padding:12px 14px;resize:none}
 .datefld input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;cursor:pointer}
 .sheet{overflow-x:hidden;overscroll-behavior:contain}
 .sheet .grab{width:44px;height:5px;margin-bottom:12px}
+
+/* Khi bàn phím mở: sheet nằm ngay trên bàn phím */
+.sheet{bottom:calc(8px + var(--kb,0px));max-height:calc(92% - var(--kb,0px));transition:transform .38s cubic-bezier(.2,.9,.3,1),visibility 0s .38s,bottom .2s ease,max-height .2s ease}
+.sheet.open{transition:transform .38s cubic-bezier(.2,.9,.3,1),bottom .2s ease,max-height .2s ease}
+.kb-open .tabbar,.kb-open .fab{visibility:hidden}

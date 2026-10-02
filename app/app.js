@@ -1,7 +1,7 @@
 /* Kế Hoạch Hoá — logic ứng dụng (không cần thư viện ngoài) */
 (function () {
   'use strict';
-  const APP_VERSION = '1.3'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
+  const APP_VERSION = '1.4'; // tăng số này và số trong version.json + index.html (?v=) mỗi lần cập nhật
 
   // ---------- tiện ích ----------
   const $ = (s, r = document) => r.querySelector(s);
@@ -233,15 +233,29 @@
   function fixViewport() {
     const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
     let gap = 0;
-    if (standalone && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement && document.activeElement.tagName)) {
+    if (standalone) {
       const portrait = innerHeight > innerWidth;
       const sh = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
       gap = sh - innerHeight;
       if (gap < 0 || gap > 140) gap = 0;
     }
-    document.documentElement.style.setProperty('--fixgap', gap + 'px');
+    if (gap !== fixGap) { fixGap = gap; document.documentElement.style.setProperty('--fixgap', gap + 'px'); }
+    keyboardFix();
+  }
+  let fixGap = -1;
+  // Bàn phím iOS phủ lên trang chứ không thu nhỏ trang → nâng sheet lên trên bàn phím và cuộn ô đang nhập vào giữa
+  function keyboardFix() {
+    const vv = window.visualViewport; if (!vv) return;
+    const kb = Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop));
+    const lift = kb > 80 ? kb + Math.max(0, fixGap) : 0;
+    document.documentElement.style.setProperty('--kb', lift + 'px');
+    document.documentElement.classList.toggle('kb-open', lift > 0);
+    const a = document.activeElement;
+    if (lift && a && a.closest && a.closest('.sheet')) setTimeout(() => a.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
   }
   fixViewport(); addEventListener('resize', fixViewport); addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
+  if (window.visualViewport) { visualViewport.addEventListener('resize', keyboardFix); visualViewport.addEventListener('scroll', keyboardFix); }
+  document.addEventListener('focusin', (e) => { if (e.target.closest && e.target.closest('.sheet') && document.documentElement.classList.contains('kb-open')) setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60); });
   let toastT;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
   function confirmBox(msg, okLabel, onOk) {
@@ -373,14 +387,16 @@
 
   function checklistSheet() {
     const t = trip();
-    const draw = () => `<div class="shead"><span></span><span>Chuẩn bị</span><button data-x>Xong</button></div>
-      <div class="list" style="padding:0">${t.checklist.map((c) => `<div class="item ${c.done ? 'done' : ''}"><button class="check" data-t="${c.id}" aria-label="Đánh dấu">✓</button><div class="m"><b>${esc(c.t)}</b></div><button data-d="${c.id}" class="danger" aria-label="Xoá" style="font-size:18px;padding:4px 8px">✕</button></div>`).join('')}</div>
-      <div class="addplace"><input class="input" id="ckNew" placeholder="Thêm mục mới…" maxlength="80"><button id="ckAdd">Thêm</button></div>`;
+    const draw = () => `<div class="shead"><span></span><span></span><button data-x>Xong</button></div>
+      <div class="addplace" style="margin:0 0 10px"><input class="input" id="ckNew" placeholder="Thêm mục mới…" maxlength="80" enterkeyhint="done" autocomplete="off"><button id="ckAdd">Thêm</button></div>
+      <div class="list" style="padding:0">${t.checklist.map((c) => `<div class="item ${c.done ? 'done' : ''}"><button class="check" data-t="${c.id}" aria-label="Đánh dấu">✓</button><div class="m"><b>${esc(c.t)}</b></div><button data-d="${c.id}" class="danger" aria-label="Xoá" style="font-size:18px;padding:4px 8px">✕</button></div>`).join('')}</div>`;
     const wire = (el) => {
       $$('[data-x]', el).forEach((b) => b.onclick = () => { closeSheet(); renderHome(); });
       $$('[data-t]', el).forEach((b) => b.onclick = () => { const c = t.checklist.find((x) => x.id === b.dataset.t); c.done = !c.done; save(); redraw(); });
       $$('[data-d]', el).forEach((b) => b.onclick = () => { t.checklist = t.checklist.filter((x) => x.id !== b.dataset.d); save(); redraw(); });
-      const add = () => { const v = $('#ckNew', el).value.trim(); if (!v) return; t.checklist.push({ id: uid(), t: v, done: false }); save(); redraw(); $('#ckNew').focus(); };
+      const add = () => { const v = $('#ckNew', el).value.trim(); if (!v) { $('#ckNew', el).focus(); return; } t.checklist.unshift({ id: uid(), t: v, done: false }); save(); redraw(); $('#ckNew').focus(); toast('Đã thêm "' + v + '"'); };
+      // giữ bàn phím mở khi bấm "Thêm" (không để nút lấy mất focus của ô nhập)
+      $('#ckAdd', el).addEventListener('pointerdown', (e) => e.preventDefault());
       $('#ckAdd', el).onclick = add; $('#ckNew', el).onkeydown = (e) => e.key === 'Enter' && add();
     };
     const redraw = () => { const el = $('#sheet'); el.innerHTML = '<div class="grab"></div>' + draw(); wire(el); };
